@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import Select from "@/components/atoms/Select";
+import Input from "@/components/atoms/Input";
 import Badge from "@/components/atoms/Badge";
 import PriceRange from "@/components/molecules/PriceRange";
 import { cn } from "@/utils/cn";
@@ -16,10 +17,22 @@ const FilterPanel = ({
   onClear
 }) => {
   const [localFilters, setLocalFilters] = useState(filters);
+  const [openSections, setOpenSections] = useState({
+    basic: true,
+    details: false,
+    amenities: false
+  });
 
   useEffect(() => {
     setLocalFilters(filters);
   }, [filters]);
+
+  const toggleSection = (section) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const handlePriceChange = (priceRange) => {
     const newFilters = {
@@ -61,11 +74,56 @@ const FilterPanel = ({
     };
     setLocalFilters(newFilters);
     onFiltersChange(newFilters);
+};
+
+  const handleAmenityChange = (amenity) => {
+    const currentAmenities = localFilters.amenities || [];
+    const newAmenities = currentAmenities.includes(amenity)
+      ? currentAmenities.filter(a => a !== amenity)
+      : [...currentAmenities, amenity];
+    
+    const newFilters = {
+      ...localFilters,
+      amenities: newAmenities
+    };
+    setLocalFilters(newFilters);
+    onFiltersChange(newFilters);
+  };
+
+  const handleSquareFootageChange = (field, value) => {
+    const newFilters = {
+      ...localFilters,
+      [field]: value === "" ? null : parseInt(value)
+    };
+    setLocalFilters(newFilters);
+    onFiltersChange(newFilters);
+  };
+
+  const handleYearBuiltChange = (field, value) => {
+    const newFilters = {
+      ...localFilters,
+      [field]: value === "" ? null : parseInt(value)
+    };
+    setLocalFilters(newFilters);
+    onFiltersChange(newFilters);
+  };
+
+  const handleLotSizeChange = (field, value) => {
+    const newFilters = {
+      ...localFilters,
+      [field]: value === "" ? null : parseFloat(value)
+    };
+    setLocalFilters(newFilters);
+    onFiltersChange(newFilters);
   };
 
   const propertyTypes = ["House", "Condo", "Townhouse", "Apartment"];
   const bedroomOptions = ["any", "1", "2", "3", "4", "5+"];
   const bathroomOptions = ["any", "1", "2", "3", "4+"];
+  const amenityOptions = [
+    "Parking", "Pool", "Gym", "Balcony", "Fireplace", "Laundry", 
+    "Garden", "Security", "Storage", "Elevator", "Terrace", "Spa"
+  ];
 
   const activeFiltersCount = () => {
     let count = 0;
@@ -73,6 +131,10 @@ const FilterPanel = ({
     if (localFilters.propertyTypes?.length > 0) count++;
     if (localFilters.bedroomsMin) count++;
     if (localFilters.bathroomsMin) count++;
+    if (localFilters.amenities?.length > 0) count++;
+    if (localFilters.squareFeetMin || localFilters.squareFeetMax) count++;
+    if (localFilters.yearBuiltMin || localFilters.yearBuiltMax) count++;
+    if (localFilters.lotSizeMin || localFilters.lotSizeMax) count++;
     return count;
   };
 
@@ -131,63 +193,235 @@ const FilterPanel = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="p-6 space-y-6"
+className="divide-y divide-gray-200"
           >
-            {/* Price Range */}
-            <PriceRange
-              value={[localFilters.priceMin || 0, localFilters.priceMax || 5000000]}
-              onChange={handlePriceChange}
-            />
-
-            {/* Property Type */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Property Type</h3>
-              <div className="flex flex-wrap gap-2">
-                {propertyTypes.map((type) => (
-                  <Button
-                    key={type}
-                    variant={localFilters.propertyTypes?.includes(type) ? "primary" : "outline"}
-                    size="sm"
-                    onClick={() => handlePropertyTypeChange(type)}
+            {/* Basic Filters Section */}
+            <div className="p-6">
+              <button
+                onClick={() => toggleSection('basic')}
+                className="w-full flex items-center justify-between text-left"
+              >
+                <h3 className="text-sm font-medium text-gray-700">Basic Filters</h3>
+                <ApperIcon 
+                  name={openSections.basic ? "ChevronUp" : "ChevronDown"} 
+                  className="w-4 h-4 text-gray-500" 
+                />
+              </button>
+              
+              <AnimatePresence>
+                {openSections.basic && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-4 space-y-6"
                   >
-                    {type}
-                  </Button>
-                ))}
-              </div>
+                    {/* Price Range */}
+                    <PriceRange
+                      value={[localFilters.priceMin || 0, localFilters.priceMax || 5000000]}
+                      onChange={handlePriceChange}
+                    />
+
+                    {/* Property Type */}
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Property Type</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {propertyTypes.map((type) => (
+                          <Button
+                            key={type}
+                            variant={localFilters.propertyTypes?.includes(type) ? "primary" : "outline"}
+                            size="sm"
+                            onClick={() => handlePropertyTypeChange(type)}
+                          >
+                            {type}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Bedrooms */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Minimum Bedrooms
+                      </label>
+                      <Select
+                        value={localFilters.bedroomsMin || "any"}
+                        onChange={(e) => handleBedroomsChange(e.target.value)}
+                      >
+                        {bedroomOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option === "any" ? "Any" : `${option} bedroom${option !== "1" ? "s" : ""}`}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    {/* Bathrooms */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Minimum Bathrooms
+                      </label>
+                      <Select
+                        value={localFilters.bathroomsMin || "any"}
+                        onChange={(e) => handleBathroomsChange(e.target.value)}
+                      >
+                        {bathroomOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option === "any" ? "Any" : `${option} bathroom${option !== "1" ? "s" : ""}`}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Bedrooms */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Minimum Bedrooms
-              </label>
-              <Select
-                value={localFilters.bedroomsMin || "any"}
-                onChange={(e) => handleBedroomsChange(e.target.value)}
+            {/* Property Details Section */}
+            <div className="p-6">
+              <button
+                onClick={() => toggleSection('details')}
+                className="w-full flex items-center justify-between text-left"
               >
-                {bedroomOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option === "any" ? "Any" : `${option} bedroom${option !== "1" ? "s" : ""}`}
-                  </option>
-                ))}
-              </Select>
+                <h3 className="text-sm font-medium text-gray-700">Property Details</h3>
+                <ApperIcon 
+                  name={openSections.details ? "ChevronUp" : "ChevronDown"} 
+                  className="w-4 h-4 text-gray-500" 
+                />
+              </button>
+              
+              <AnimatePresence>
+                {openSections.details && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-4 space-y-6"
+                  >
+                    {/* Square Footage */}
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Square Footage</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Min</label>
+                          <Input
+                            type="number"
+                            placeholder="Min sq ft"
+                            value={localFilters.squareFeetMin || ""}
+                            onChange={(e) => handleSquareFootageChange("squareFeetMin", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Max</label>
+                          <Input
+                            type="number"
+                            placeholder="Max sq ft"
+                            value={localFilters.squareFeetMax || ""}
+                            onChange={(e) => handleSquareFootageChange("squareFeetMax", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Year Built */}
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Year Built</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">From</label>
+                          <Input
+                            type="number"
+                            placeholder="From year"
+                            value={localFilters.yearBuiltMin || ""}
+                            onChange={(e) => handleYearBuiltChange("yearBuiltMin", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">To</label>
+                          <Input
+                            type="number"
+                            placeholder="To year"
+                            value={localFilters.yearBuiltMax || ""}
+                            onChange={(e) => handleYearBuiltChange("yearBuiltMax", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Lot Size */}
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-3">Lot Size (acres)</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Min</label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Min acres"
+                            value={localFilters.lotSizeMin || ""}
+                            onChange={(e) => handleLotSizeChange("lotSizeMin", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Max</label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="Max acres"
+                            value={localFilters.lotSizeMax || ""}
+                            onChange={(e) => handleLotSizeChange("lotSizeMax", e.target.value)}
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {/* Bathrooms */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Minimum Bathrooms
-              </label>
-              <Select
-                value={localFilters.bathroomsMin || "any"}
-                onChange={(e) => handleBathroomsChange(e.target.value)}
+            {/* Amenities Section */}
+            <div className="p-6">
+              <button
+                onClick={() => toggleSection('amenities')}
+                className="w-full flex items-center justify-between text-left"
               >
-                {bathroomOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option === "any" ? "Any" : `${option} bathroom${option !== "1" ? "s" : ""}`}
-                  </option>
-                ))}
-              </Select>
+                <h3 className="text-sm font-medium text-gray-700">Amenities</h3>
+                <ApperIcon 
+                  name={openSections.amenities ? "ChevronUp" : "ChevronDown"} 
+                  className="w-4 h-4 text-gray-500" 
+                />
+              </button>
+              
+              <AnimatePresence>
+                {openSections.amenities && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-4"
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      {amenityOptions.map((amenity) => (
+                        <Button
+                          key={amenity}
+                          variant={localFilters.amenities?.includes(amenity) ? "primary" : "outline"}
+                          size="sm"
+                          onClick={() => handleAmenityChange(amenity)}
+                          className="text-xs"
+                        >
+                          {amenity}
+                        </Button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}

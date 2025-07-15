@@ -56,12 +56,45 @@ class PropertyService {
           filteredProperties = filteredProperties.filter(p => p.bathrooms >= filters.bathroomsMin);
         }
 
-        // Filter by location (simple text search)
+// Filter by location (simple text search)
         if (filters.location) {
           filteredProperties = filteredProperties.filter(p => 
             p.address.toLowerCase().includes(filters.location.toLowerCase()) ||
             p.title.toLowerCase().includes(filters.location.toLowerCase())
           );
+        }
+
+        // Filter by amenities
+        if (filters.amenities && filters.amenities.length > 0) {
+          filteredProperties = filteredProperties.filter(p => 
+            filters.amenities.some(amenity => 
+              p.features.some(feature => feature.toLowerCase().includes(amenity.toLowerCase()))
+            )
+          );
+        }
+
+        // Filter by square footage
+        if (filters.squareFeetMin) {
+          filteredProperties = filteredProperties.filter(p => p.squareFeet >= filters.squareFeetMin);
+        }
+        if (filters.squareFeetMax) {
+          filteredProperties = filteredProperties.filter(p => p.squareFeet <= filters.squareFeetMax);
+        }
+
+        // Filter by year built (assuming yearBuilt property exists)
+        if (filters.yearBuiltMin) {
+          filteredProperties = filteredProperties.filter(p => (p.yearBuilt || 2000) >= filters.yearBuiltMin);
+        }
+        if (filters.yearBuiltMax) {
+          filteredProperties = filteredProperties.filter(p => (p.yearBuilt || 2000) <= filters.yearBuiltMax);
+        }
+
+        // Filter by lot size (assuming lotSize property exists)
+        if (filters.lotSizeMin) {
+          filteredProperties = filteredProperties.filter(p => (p.lotSize || 0.5) >= filters.lotSizeMin);
+        }
+        if (filters.lotSizeMax) {
+          filteredProperties = filteredProperties.filter(p => (p.lotSize || 0.5) <= filters.lotSizeMax);
         }
 
         resolve(filteredProperties);

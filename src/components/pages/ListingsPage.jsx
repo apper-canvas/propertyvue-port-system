@@ -17,13 +17,20 @@ const ListingsPage = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  const [filters, setFilters] = useState({
+const [filters, setFilters] = useState({
     priceMin: 0,
     priceMax: 5000000,
     propertyTypes: [],
     bedroomsMin: null,
     bathroomsMin: null,
-    location: ""
+    location: "",
+    amenities: [],
+    squareFeetMin: null,
+    squareFeetMax: null,
+    yearBuiltMin: null,
+    yearBuiltMax: null,
+    lotSizeMin: null,
+    lotSizeMax: null
   });
 
   const loadProperties = async () => {
@@ -65,14 +72,21 @@ const ListingsPage = () => {
     }));
   };
 
-  const handleClearFilters = () => {
+const handleClearFilters = () => {
     const clearedFilters = {
       priceMin: 0,
       priceMax: 5000000,
       propertyTypes: [],
       bedroomsMin: null,
       bathroomsMin: null,
-      location: ""
+      location: "",
+      amenities: [],
+      squareFeetMin: null,
+      squareFeetMax: null,
+      yearBuiltMin: null,
+      yearBuiltMax: null,
+      lotSizeMin: null,
+      lotSizeMax: null
     };
     setFilters(clearedFilters);
   };
